@@ -3,6 +3,10 @@ from shutil import move
 from datetime import datetime
 from pygame import mixer # import PyGame's music mixer
 
+#####################################################
+### INITIALISATION ##################################
+#####################################################
+
 # MUSIC CONFIG
 VOLUME_MIN = 0.0
 VOLUME_MAX = 0.4
@@ -10,23 +14,24 @@ VOLUME_FADE_RATE = 0.05
 VOLUME_FADE_DELAY = 0.2
 
 MUSIC_DIR = "/home/pi/BGM"
-MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3" or mp3[-4:] == ".ogg"] # Find everything that's .mp3 or .ogg
+MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3" or mp3[-4:] == ".ogg"]
+MUSIC_RESTART = False # False = Music resumes | True = Music restarts
 
 startdelay = 0 # Value (in seconds) to delay audio start.  If you have a splash screen with audio and the script is playing music over the top of it, increase this value to delay the script from starting.
-RESTART_MODE = True # If true, this will cause the script to fade the music out and -stop- the song rather than pause it.
 startsong = "" # if this is not blank, this is the EXACT, CaSeSeNsAtIvE filename of the song you always want to play first on boot.
 
 lastsong = -1
 currentSongIndex = -1
 mixer.init() # Prep that bad boy up.
-random.seed()
-volume = VOLUME_MIN # Store this for later use to handle fading out.
 
-#local variables
+#volume = VOLUME_MIN # Store this for later use to handle fading out.
+
+# local variables
 ES_PROCESS = "emulationstatio"
 
-#TODO: Fill in all of the current RetroPie Emulator process names in this list.
+# TODO: Fill in all of the current RetroPie Emulator process names in this list.
 EMU_PROCESS_LIST = ["advmame","ags","alephone","atari800","basiliskll","cannonball","capricerpi","cgenesis","daphne","dgen","dosbox","eduke32","fbzx","frotz","fuse","gemrb","gngeo","gpsp","hatari","ioquake3","jzintv","kodi","linapple","lincity","love","mame","micropolis","mupen64plus","openbor","openmsx","openttd","opentyrian","osmose","pifba","pisnes","ppsspp","reicast","residualvm","retroarch","scummvm","sdlpop","simcoupe","snes9x","solarus","stella","stratagus","tyrquake","uae4all2","uae4arm","uqm","vice","wolf4sdl","xrick","xroar","zdoom"]
+random.seed()
 
 # LOGGING SETUP
 SCRIPT_NAME = os.path.basename(__file__)
@@ -43,7 +48,9 @@ if os.path.isfile(LOG_FILE):
     move(LOG_FILE, LOG_FILE+".bak")
 logging.basicConfig( filename=LOG_FILE, level=logging.INFO )
 
-##############################################################################
+#####################################################
+### FUNCTIONS #######################################
+#####################################################
 
 def log( message ):
     now = datetime.now().strftime("[%Y-%m-%d][%H:%M:%S]")
@@ -52,11 +59,11 @@ def log( message ):
 def adjustVolume( newVolume ):
     global mixer
     mixer.music.set_volume( newVolume )
-    log(">> newVolume ["+str(mixer.music.get_volume())+"]")
+#    log(">> newVolume ["+str(mixer.music.get_volume())+"]")
     
 def startSong(forceStart):
-    global RESTART_MODE, mixer
-    if RESTART_MODE or forceStart:
+    global MUSIC_RESTART, mixer
+    if MUSIC_RESTART or forceStart:
         mixer.music.rewind() #testing
         mixer.music.play()
         log(">> Audio started")
@@ -65,8 +72,8 @@ def startSong(forceStart):
         log(">> Audio resumed")
 
 def stopSong():
-    global RESTART_MODE, mixer
-    if RESTART_MODE:
+    global MUSIC_RESTART, mixer
+    if MUSIC_RESTART:
         mixer.music.stop() 
         log(">> Audio stopped")
     else:
@@ -97,11 +104,19 @@ def fadeVolumeDown():
     adjustVolume( VOLUME_MIN )
     stopSong()
 
+def getProcessIds():
+    return [pid for pid in os.listdir('/proc') if pid.isdigit()]
+
+def getProcessName(pid):
+    return open(os.path.join('/proc',pid,'comm'),'rb').read()[:-1]
+    
 log("Script: "+SCRIPT_NAME)
 log("LOGDIR: "+LOG_DIR)
 log("LOGFIL: "+LOG_FILE)
 
-##############################################################################
+#####################################################
+### MAIN ############################################
+#####################################################
         
 log("\n*********************\n** EXECUTION START **\n*********************")
 
@@ -110,11 +125,11 @@ esIsRunning = False
 while not esIsRunning:
     log("Waiting for EmulationStation to start...")
     time.sleep(1)
-    pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
+    pids = getProcessIds()
     for pid in pids:
         try:
-            procname = open(os.path.join('/proc',pid,'comm'),'rb').read()
-            if procname[:-1] == ES_PROCESS: # Emulation Station's actual process name is apparently short 1 letter.
+            procname = getProcessName(pid)
+            if procname == ES_PROCESS: # Emulation Station's actual process name is apparently short 1 letter.
                 esIsRunning=True
         except IOError: 
             continue
@@ -127,12 +142,12 @@ if startdelay > 0:
     
 #Look for OMXplayer - if it's running, someone's got a splash screen going!
 log("Checking for splashscreen video [OMXplayer]")
-pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
+pids = getProcessIds()
 for pid in pids:
     try:
-        procname = open(os.path.join('/proc',pid,'comm'),'rb').read()
+        procname = getProcessName(pid)
         #videoPlayer = ["omxplayer","omxplayer.bin"]
-        if procname[:-1] == "omxplayer" or procname[:-1] == "omxplayer.bin": # Looking for a splash screen!
+        if procname == "omxplayer" or procname == "omxplayer.bin": # Looking for a splash screen!
             log("Waiting for splashscreen video to end... [OMXplayer]")
             while os.path.exists('/proc/'+pid):
                 time.sleep(1) #OMXPlayer is running, sleep 1 to prevent the need for a splash.
@@ -156,11 +171,11 @@ while True:
             #mixer.music.stop(); #halt the music, emulationStation is not running!
             fadeVolumeDown()
         time.sleep(10)
-        pids = [pid for pid in os.listdir('/proc') if pid.isdigit()]
+        pids = getProcessIds()
         for pid in pids:
             try:
-                procname = open(os.path.join('/proc',pid,'comm'),'rb').read()
-                if procname[:-1] == ES_PROCESS: # Emulation Station's actual process name is apparently short 1 letter.
+                procname = getProcessName(pid)
+                if procname == ES_PROCESS: # Emulation Station's actual process name is apparently short 1 letter.
                     esIsRunning=True # Will cause us to break out of the loop because ES is now running.
             except IOError: 
                 continue
@@ -175,25 +190,22 @@ while True:
         log("Now Playing [" + song+"]")
         
     #Emulator check
-    pids = [pid for pid in os.listdir('/proc') if pid.isdigit()] 
-    emulator = -1;
+    pids = getProcessIds()
     esIsRunning=False #New check 4-23-16 - set this to False (assume ES is no longer running until proven otherwise)
     for pid in pids:
         try:
-            procname = open(os.path.join('/proc',pid,'comm'),'rb').read()
-            if procname[:-1] == ES_PROCESS: # Killing 2 birds with one stone, while we look for emulators, make sure EmulationStation is still running.
+            procname = getProcessName(pid)
+            if procname == ES_PROCESS: # Killing 2 birds with one stone, while we look for emulators, make sure EmulationStation is still running.
                 esIsRunning=True # And turn it back to True, because it wasn't done running.  This will prevent the loop above from stopping the music.
 
-            if procname[:-1] in EMU_PROCESS_LIST: #If the process name is in our list of known emulators
-                emulator = pid;
-                #Turn down the music
-                log("Emulator started ['"+procname[:-1]+"']")
+            if procname in EMU_PROCESS_LIST: #If the process name is in our list of known emulators
+                log("Emulator started ['"+procname+"']")
                 fadeVolumeDown()
 
-                log("Monitoring emulator state ['"+procname[:-1]+"']")
+                log("Monitoring emulator state ['"+procname+"']")
                 while os.path.exists("/proc/" + pid):
                     time.sleep(1); # Delay 1 second and check again.
-                #Turn up the music
+
                 log("Emulator finished ['"+procname[:-1]+"']")
                 fadeVolumeUp(forceStart=False)
 
@@ -204,3 +216,5 @@ while True:
     #end of the main while loop
     
 log("An error has occurred that has stopped "+SCRIPT_NAME+" from executing.") #theoretically you should never get this far.
+
+#####################################################
