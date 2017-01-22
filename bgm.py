@@ -1,28 +1,10 @@
 import os, logging, random, time
 from shutil import move
-from datetime import datetime
 from pygame import mixer                # "sudo apt-get install python-pygame"
 
 #####################################################
 ### CONFIG ##########################################
 #####################################################
-
-# MUSIC CONFIG
-VOLUME_MIN = 0.0
-VOLUME_MAX = 0.4
-VOLUME_FADE_RATE = 0.05
-VOLUME_FADE_DELAY = 0.2
-
-MUSIC_DIR = "/home/pi/BGM"
-MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3" or mp3[-4:] == ".ogg"]
-MUSIC_LIST_NUM = len( MUSIC_LIST )
-MUSIC_RESTART = False                   # False = Music resumes | True = Music restarts
-MUSIC_ONLY_THIS = ""                    # Force only this song to play
-
-# PROCESS LISTS
-PROCESS_EMUSTAT = "emulationstatio"
-PROCESS_VIDEO = ["omxplayer","omxplayer.bin"]
-PROCESS_EMULATORS = ["retroarch","advmame","ags","alephone","atari800","basiliskll","cannonball","capricerpi","cgenesis","daphne","dgen","dosbox","eduke32","fbzx","frotz","fuse","gemrb","gngeo","gpsp","hatari","ioquake3","jzintv","kodi","linapple","lincity","love","mame","micropolis","mupen64plus","openbor","openmsx","openttd","opentyrian","osmose","pifba","pisnes","ppsspp","reicast","residualvm","scummvm","sdlpop","simcoupe","snes9x","solarus","stella","stratagus","tyrquake","uae4all2","uae4arm","uqm","vice","wolf4sdl","xrick","xroar","zdoom"]
 
 # LOGGING SETUP
 SCRIPT_NAME = os.path.basename(__file__)
@@ -36,7 +18,24 @@ if os.path.isfile(LOG_FILE):
     move(LOG_FILE, LOG_FILE+".bak")
     
 logging.basicConfig( filename=LOG_FILE, format=LOG_FORMAT, level=logging.INFO )
-logger = logging.getLogger("test")
+logger = logging.getLogger("bgm")
+
+# MUSIC CONFIG
+VOLUME_MIN = 0.0
+VOLUME_MAX = 0.4
+VOLUME_FADE_RATE = 0.05
+VOLUME_FADE_DELAY = 0.3
+
+MUSIC_DIR = "/home/pi/RetroPie/roms/bgm"
+MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3"]
+MUSIC_LIST_NUM = len( MUSIC_LIST )
+MUSIC_RESTART = True                   # False = Music resumes | True = Music restarts
+MUSIC_PLAY_ONLY = ""                   # Force only this song to play
+
+# PROCESS LISTS
+PROCESS_EMUSTAT = "emulationstatio"
+PROCESS_VIDEO = ["omxplayer","omxplayer.bin"]
+PROCESS_EMULATORS = ["retroarch","advmame","ags","alephone","atari800","basiliskll","cannonball","capricerpi","cgenesis","daphne","dgen","dosbox","eduke32","fbzx","frotz","fuse","gemrb","gngeo","gpsp","hatari","ioquake3","jzintv","kodi","linapple","lincity","love","mame","micropolis","mupen64plus","openbor","openmsx","openttd","opentyrian","osmose","pifba","pisnes","ppsspp","reicast","residualvm","scummvm","sdlpop","simcoupe","snes9x","solarus","stella","stratagus","tyrquake","uae4all2","uae4arm","uqm","vice","wolf4sdl","xrick","xroar","zdoom"]
 
 # VARS & OBJECTS
 lastSongIndex = -1
@@ -52,9 +51,9 @@ def adjustVolume( newVolume ):
     global mixer, logger
     mixer.music.set_volume( newVolume )
     
-def startSong(forceStart):
+def startSong(forceRestart):
     global MUSIC_RESTART, mixer, logger
-    if MUSIC_RESTART or forceStart:
+    if MUSIC_RESTART or forceRestart:
         mixer.music.rewind()
         mixer.music.play()
         logger.info("Audio started")
@@ -71,11 +70,11 @@ def stopSong():
         mixer.music.pause() 
         logger.info("Audio paused")
 
-def fadeVolumeUp(forceStart):
+def fadeVolumeUp(forceRestart):
     global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN, logger
     currVolume = VOLUME_MIN
     adjustVolume( currVolume )
-    startSong(forceStart)
+    startSong(forceRestart)
     logger.debug("VolumeUp from "+str(currVolume)+" to "+str(VOLUME_MAX))
     while not ( currVolume >= VOLUME_MAX ):
         currVolume += VOLUME_FADE_RATE
@@ -106,14 +105,14 @@ def getProcessName(pid):
 #####################################################
 
 logger.info("Log : "+LOG_FILE)
-
+    
 # Ensure we have music to play 
 if MUSIC_LIST_NUM == 0:
     logger.warning("No music to play...")
     sys.exit()
 elif MUSIC_LIST_NUM == 1:           # If only one song exists, force it
-    MUSIC_ONLY_THIS = MUSIC_LIST[0]
-    logger.debug("Single song selected ["+MUSIC_ONLY_THIS+"]")
+    MUSIC_PLAY_ONLY = MUSIC_LIST[0]
+    logger.debug("Single song selected ["+MUSIC_PLAY_ONLY+"]")
 
 # Wait for EmulationStation to start
 logger.info("Waiting for EmulationStation to start...")
@@ -127,6 +126,7 @@ while not esIsRunning:
             if procname == PROCESS_EMUSTAT:
                 esIsRunning = True
         except IOError: 
+            logger.error("Failed to read process record")
             continue
     
 # Wait for OMXPlayer to finish (video splashscreen player)
@@ -165,19 +165,19 @@ while True:
                     procname = getProcessName(pid)
                     if procname == PROCESS_EMUSTAT:
                         esIsRunning = True
-                        fadeVolumeUp(forceStart=False)
+                        fadeVolumeUp(forceRestart=False)
                         logger.info("EmulationStation started running")
                         break
 
-                except IOError: 
+                except IOError:
                     continue
     logger.debug("EmulationStation running...")
 
     # Pick track to start playing music
     if not mixer.music.get_busy():
         logger.info("Loading new music")
-        if not MUSIC_ONLY_THIS == "":
-            currentSongIndex = MUSIC_LIST.index( MUSIC_ONLY_THIS )
+        if not MUSIC_PLAY_ONLY == "":
+            currentSongIndex = MUSIC_LIST.index( MUSIC_PLAY_ONLY )
         else:
             while currentSongIndex == lastSongIndex:
                 currentSongIndex = random.randint( 0, MUSIC_LIST_NUM - 1 )
@@ -185,7 +185,7 @@ while True:
         mixer.music.load(song) 
         logger.info("Loaded music [" + song+"]")
         lastSongIndex=currentSongIndex
-        fadeVolumeUp(forceStart=True)
+        fadeVolumeUp(forceRestart=True)
     logger.debug("Music playing...")
         
     # Emulator check
@@ -208,7 +208,7 @@ while True:
                 while os.path.exists("/proc/" + pid):
                     time.sleep(1)
 
-                fadeVolumeUp(forceStart=False)
+                fadeVolumeUp(forceRestart=False)
                 logger.info("Emulator finished ["+procname+"]")
         except IOError:
             continue
@@ -216,7 +216,6 @@ while True:
     
 #####################################################
 
-logger.warning("An error has occurred that has stopped "+SCRIPT_NAME+" from executing.")
+logger.error("An error has occurred that has stopped "+SCRIPT_NAME+" from executing.")
 
 #####################################################
-
