@@ -1,7 +1,7 @@
 import os, logging, random, time
 from shutil import move
 from datetime import datetime
-from pygame import mixer # import PyGame's music mixer
+from pygame import mixer                # Import PyGame's music mixer
 
 #####################################################
 ### CONFIG ##########################################
@@ -36,7 +36,7 @@ if os.path.isfile(LOG_FILE):
 logging.basicConfig( filename=LOG_FILE, level=logging.INFO )
 
 # VARS & OBJECTS
-lastsong = -1
+lastSongIndex = -1
 currentSongIndex = -1
 mixer.init()
 random.seed()
@@ -58,13 +58,9 @@ def logLevel( level ):
     else:                   # Every tiny detail
         return 3
 
-def log( message ):
-    now = datetime.now().strftime("[%Y-%m-%d] [%H:%M:%S]")
-    logging.info( now +" "+ message )
-
-def log2( levelString, message ):
+def log( levelString, message ):
     if logLevel( levelString ) <= logLevel( LOG_LEVEL ):
-        now = datetime.now().strftime("[%Y-%m-%d] [%H:%M:%S]")
+        now = datetime.now().strftime(" [%Y-%m-%d] [%H:%M:%S]")
         level = "["+levelString.ljust(5)+"]"
         logging.info( now +" "+level+" "+ message )
     
@@ -77,26 +73,26 @@ def startSong(forceStart):
     if MUSIC_RESTART or forceStart:
         mixer.music.rewind()
         mixer.music.play()
-        log2("INFO","Audio started")
+        log("INFO","Audio started")
     else:
         mixer.music.unpause()
-        log2("INFO","Audio resumed")
+        log("INFO","Audio resumed")
         
 def stopSong():
     global MUSIC_RESTART, mixer
     if MUSIC_RESTART:
         mixer.music.stop() 
-        log2("INFO","Audio stopped")
+        log("INFO","Audio stopped")
     else:
         mixer.music.pause() 
-        log2("INFO","Audio paused")
+        log("INFO","Audio paused")
 
 def fadeVolumeUp(forceStart):
     global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN
     currVolume = VOLUME_MIN
     adjustVolume( currVolume )
     startSong(forceStart)
-    log2("DEBUG","VolumeUp from "+str(currVolume)+" to "+str(VOLUME_MAX))
+    log("DEBUG","VolumeUp from "+str(currVolume)+" to "+str(VOLUME_MAX))
     while not ( currVolume >= VOLUME_MAX ):
         currVolume += VOLUME_FADE_RATE
         adjustVolume( currVolume )
@@ -107,7 +103,7 @@ def fadeVolumeDown():
     global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN
     currVolume = VOLUME_MAX
     adjustVolume( currVolume )
-    log2("DEBUG","VolumeDown from "+str(currVolume)+" to "+str(VOLUME_MIN))
+    log("DEBUG","VolumeDown from "+str(currVolume)+" to "+str(VOLUME_MIN))
     while not ( currVolume <= VOLUME_MIN ):
         currVolume -= VOLUME_FADE_RATE
         adjustVolume( currVolume )
@@ -125,18 +121,18 @@ def getProcessName(pid):
 ### INIT ############################################
 #####################################################
 
-log2("INFO","Log : "+LOG_FILE)
+log("INFO","Log : "+LOG_FILE)
 
 # Ensure we have music to play 
 if MUSIC_LIST_NUM == 0:
-    log2("ERROR","No music to play...")
+    log("ERROR","No music to play...")
     sys.exit()
 elif MUSIC_LIST_NUM == 1:           # If only one song exists, force it
     MUSIC_ONLY_THIS = MUSIC_LIST[0]
-    log2("DEBUG","Single song selected ["+MUSIC_ONLY_THIS+"]")
+    log("DEBUG","Single song selected ["+MUSIC_ONLY_THIS+"]")
 
 # Wait for EmulationStation to start
-log2("INFO","Waiting for EmulationStation to start...")
+log("INFO","Waiting for EmulationStation to start...")
 esIsRunning = False
 while not esIsRunning:
     time.sleep(1)
@@ -150,13 +146,13 @@ while not esIsRunning:
             continue
     
 # Wait for OMXPlayer to finish (video splashscreen player)
-log2("INFO","Checking for splashscreen video [OMXplayer]")
+log("INFO","Checking for splashscreen video [OMXplayer]")
 pids = getProcessIds()
 for pid in pids:
     try:
         procname = getProcessName(pid)
         if procname in PROCESS_VIDEO:
-            log2("INFO","Waiting for splashscreen video to end... ["+procname+"]")
+            log("INFO","Waiting for splashscreen video to end... ["+procname+"]")
             while os.path.exists('/proc/'+pid):
                 time.sleep(1)
     except IOError: 
@@ -166,15 +162,15 @@ for pid in pids:
 ### MAIN ############################################
 #####################################################
 
-log2("INFO","Starting main sequence...")
+log("INFO","Starting main sequence...")
 while True:
     time.sleep(1);
 
     # Check to see if EmulationStation has closed (for instance, dropping to terminal)
     if not esIsRunning:
-        log2("INFO","EmulationStation stopped running")
+        log("INFO","EmulationStation stopped running")
         while not esIsRunning:
-            log2("DEBUG","Waiting for EmulationStation to restart... [In Terminal?]")
+            log("DEBUG","Waiting for EmulationStation to restart... [In Terminal?]")
             if mixer.music.get_volume() > 0:
                 fadeVolumeDown()
             time.sleep(1)
@@ -186,27 +182,27 @@ while True:
                     if procname == PROCESS_EMUSTAT:
                         esIsRunning = True
                         fadeVolumeUp(forceStart=False)
-                        log2("INFO","EmulationStation started running")
+                        log("INFO","EmulationStation started running")
                         break
 
                 except IOError: 
                     continue
-    log2("DEBUG","EmulationStation running...")
+    log("DEBUG","EmulationStation running...")
 
     # Pick track to start playing music
     if not mixer.music.get_busy():
-        log2("INFO","Loading new music")
+        log("INFO","Loading new music")
         if not MUSIC_ONLY_THIS == "":
             currentSongIndex = MUSIC_LIST.index( MUSIC_ONLY_THIS )
         else:
-            while currentSongIndex == lastsong:
+            while currentSongIndex == lastSongIndex:
                 currentSongIndex = random.randint( 0, MUSIC_LIST_NUM - 1 )
         song = os.path.join(MUSIC_DIR, MUSIC_LIST[currentSongIndex])
         mixer.music.load(song) 
-        log2("INFO","Loaded music [" + song+"]")
-        lastsong=currentSongIndex
+        log("INFO","Loaded music [" + song+"]")
+        lastSongIndex=currentSongIndex
         fadeVolumeUp(forceStart=True)
-    log2("DEBUG","Music playing...")
+    log("DEBUG","Music playing...")
         
     # Emulator check
     pids = getProcessIds()
@@ -216,27 +212,27 @@ while True:
             procname = getProcessName(pid)
             # Is EmulationStation running
             if procname == PROCESS_EMUSTAT:
-                log2("DEBUG","EmulationStation is still running...")
+                log("DEBUG","EmulationStation is still running...")
                 esIsRunning = True
 
             # Is one of the known emulators running
             if procname in PROCESS_EMULATORS:
-                log2("INFO","Emulator started ["+procname+"]")
+                log("INFO","Emulator started ["+procname+"]")
                 fadeVolumeDown()
 
-                log2("INFO","Waiting for emulator to finish... ["+procname+"]")
+                log("INFO","Waiting for emulator to finish... ["+procname+"]")
                 while os.path.exists("/proc/" + pid):
                     time.sleep(1)
 
                 fadeVolumeUp(forceStart=False)
-                log2("INFO","Emulator finished ["+procname+"]")
+                log("INFO","Emulator finished ["+procname+"]")
         except IOError:
             continue
-    log2("DEBUG","No emulator running...")
+    log("DEBUG","No emulator running...")
     
 #####################################################
 
-log2("ERROR","An error has occurred that has stopped "+SCRIPT_NAME+" from executing.")
+log("ERROR","An error has occurred that has stopped "+SCRIPT_NAME+" from executing.")
 
 #####################################################
 
