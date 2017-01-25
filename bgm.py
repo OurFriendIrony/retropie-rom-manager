@@ -1,4 +1,5 @@
 import os, logging, random, time
+import RPi.GPIO as GPIO
 from shutil import move
 from pygame import mixer                # "sudo apt-get install python-pygame"
 
@@ -36,6 +37,12 @@ MUSIC_PLAY_ONLY = ""                   # Force only this song to play
 PROCESS_EMUSTAT = "emulationstatio"
 PROCESS_VIDEO = ["omxplayer","omxplayer.bin"]
 PROCESS_EMULATORS = ["retroarch","advmame","ags","alephone","atari800","basiliskll","cannonball","capricerpi","cgenesis","daphne","dgen","dosbox","eduke32","fbzx","frotz","fuse","gemrb","gngeo","gpsp","hatari","ioquake3","jzintv","kodi","linapple","lincity","love","mame","micropolis","mupen64plus","openbor","openmsx","openttd","opentyrian","osmose","pifba","pisnes","ppsspp","reicast","residualvm","scummvm","sdlpop","simcoupe","snes9x","solarus","stella","stratagus","tyrquake","uae4all2","uae4arm","uqm","vice","wolf4sdl","xrick","xroar","zdoom"]
+
+# GPIO
+GPIO.setmode( GPIO.BOARD )
+GPIO.setwarnings( False )
+PIN_BUTTON = 32
+GPIO.setup( PIN_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP )
 
 # VARS & OBJECTS
 lastSongIndex = -1
@@ -99,6 +106,16 @@ def getProcessIds():
 
 def getProcessName(pid):
     return open(os.path.join('/proc',pid,'comm'),'rb').read()[:-1] # Remove last character (new line)
+
+def buttonWasPressed():
+    global PIN_BUTTON
+    try:
+        if not GPIO.input( PIN_BUTTON ):
+            logger.info("Button was pressed ["+str(PIN_BUTTON)+"]")
+            return True
+    except KeyboardInterrupt:
+        pass
+    return False
 
 #####################################################
 ### INIT ############################################
@@ -174,7 +191,10 @@ while True:
     logger.debug("EmulationStation running...")
 
     # Pick track to start playing music
-    if not mixer.music.get_busy():
+    buttonPressed=buttonWasPressed()
+    if not mixer.music.get_busy() or buttonPressed:
+        if buttonPressed:
+            fadeVolumeDown()
         logger.info("Loading new music")
         if not MUSIC_PLAY_ONLY == "":
             currentSongIndex = MUSIC_LIST.index( MUSIC_PLAY_ONLY )
@@ -187,7 +207,7 @@ while True:
         lastSongIndex=currentSongIndex
         fadeVolumeUp(forceRestart=True)
     logger.debug("Music playing...")
-        
+
     # Emulator check
     pids = getProcessIds()
     esIsRunning = False
