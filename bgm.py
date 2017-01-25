@@ -28,10 +28,15 @@ VOLUME_FADE_RATE = 0.05
 VOLUME_FADE_DELAY = 0.3
 
 MUSIC_DIR = "/home/pi/RetroPie/roms/bgm"
-MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3"]
-MUSIC_LIST_NUM = len( MUSIC_LIST )
-MUSIC_RESTART = True                   # False = Music resumes | True = Music restarts
 MUSIC_PLAY_ONLY = ""                   # Force only this song to play
+MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3"]
+MUSIC_RESTART = False                  # False = Music resumes | True = Music restarts
+
+# If only one song exists, force it
+if not MUSIC_PLAY_ONLY == "":
+    if MUSIC_PLAY_ONLY in MUSIC_LIST:
+        MUSIC_LIST = [MUSIC_PLAY_ONLY]
+        logger.debug("Single song selected ["+MUSIC_PLAY_ONLY+"]")
 
 # PROCESS LISTS
 PROCESS_EMUSTAT = "emulationstatio"
@@ -45,8 +50,8 @@ PIN_BUTTON = 32
 GPIO.setup( PIN_BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_UP )
 
 # VARS & OBJECTS
-lastSongIndex = -1
-currentSongIndex = -1
+playedSongs = []
+
 mixer.init()
 random.seed()
 
@@ -55,11 +60,11 @@ random.seed()
 #####################################################
 
 def adjustVolume( newVolume ):
-    global mixer, logger
+    global mixer
     mixer.music.set_volume( newVolume )
     
 def startSong(forceRestart):
-    global MUSIC_RESTART, mixer, logger
+    global MUSIC_RESTART, mixer
     if MUSIC_RESTART or forceRestart:
         mixer.music.rewind()
         mixer.music.play()
@@ -69,7 +74,7 @@ def startSong(forceRestart):
         logger.info("Audio resumed")
         
 def stopSong():
-    global MUSIC_RESTART, mixer, logger
+    global MUSIC_RESTART, mixer
     if MUSIC_RESTART:
         mixer.music.stop() 
         logger.info("Audio stopped")
@@ -78,7 +83,7 @@ def stopSong():
         logger.info("Audio paused")
 
 def fadeVolumeUp(forceRestart):
-    global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN, logger
+    global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN
     currVolume = VOLUME_MIN
     adjustVolume( currVolume )
     startSong(forceRestart)
@@ -90,7 +95,7 @@ def fadeVolumeUp(forceRestart):
     adjustVolume( VOLUME_MAX )
 
 def fadeVolumeDown():
-    global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN, logger
+    global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN
     currVolume = VOLUME_MAX
     adjustVolume( currVolume )
     logger.debug("VolumeDown from "+str(currVolume)+" to "+str(VOLUME_MIN))
@@ -117,6 +122,13 @@ def buttonWasPressed():
         pass
     return False
 
+def trackPlayedSongs(index):
+    global playedSongs
+    playedSongs.append(index)
+    if len(playedSongs) == len( MUSIC_LIST ):
+        playedSongs = [index]
+    logger.debug("Tracked Songs: "+str(playedSongs))
+
 #####################################################
 ### INIT ############################################
 #####################################################
@@ -124,12 +136,9 @@ def buttonWasPressed():
 logger.info("Log : "+LOG_FILE)
     
 # Ensure we have music to play 
-if MUSIC_LIST_NUM == 0:
+if len( MUSIC_LIST ) == 0:
     logger.warning("No music to play...")
     sys.exit()
-elif MUSIC_LIST_NUM == 1:           # If only one song exists, force it
-    MUSIC_PLAY_ONLY = MUSIC_LIST[0]
-    logger.debug("Single song selected ["+MUSIC_PLAY_ONLY+"]")
 
 # Wait for EmulationStation to start
 logger.info("Waiting for EmulationStation to start...")
@@ -196,15 +205,13 @@ while True:
         if buttonPressed:
             fadeVolumeDown()
         logger.info("Loading new music")
-        if not MUSIC_PLAY_ONLY == "":
-            currentSongIndex = MUSIC_LIST.index( MUSIC_PLAY_ONLY )
-        else:
-            while currentSongIndex == lastSongIndex:
-                currentSongIndex = random.randint( 0, MUSIC_LIST_NUM - 1 )
+        currentSongIndex = random.randint( 0, len( MUSIC_LIST ) - 1 )
+        while currentSongIndex in playedSongs:
+            currentSongIndex = random.randint( 0, len( MUSIC_LIST ) - 1 )
+        trackPlayedSongs(currentSongIndex)
         song = os.path.join(MUSIC_DIR, MUSIC_LIST[currentSongIndex])
         mixer.music.load(song) 
         logger.info("Loaded music [" + song+"]")
-        lastSongIndex=currentSongIndex
         fadeVolumeUp(forceRestart=True)
     logger.debug("Music playing...")
 
