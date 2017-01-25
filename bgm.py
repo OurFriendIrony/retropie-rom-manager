@@ -60,11 +60,9 @@ random.seed()
 #####################################################
 
 def adjustVolume( newVolume ):
-    global mixer
     mixer.music.set_volume( newVolume )
     
 def startSong(forceRestart):
-    global MUSIC_RESTART, mixer
     if MUSIC_RESTART or forceRestart:
         mixer.music.rewind()
         mixer.music.play()
@@ -74,7 +72,6 @@ def startSong(forceRestart):
         logger.info("Audio resumed")
         
 def stopSong():
-    global MUSIC_RESTART, mixer
     if MUSIC_RESTART:
         mixer.music.stop() 
         logger.info("Audio stopped")
@@ -83,7 +80,6 @@ def stopSong():
         logger.info("Audio paused")
 
 def fadeVolumeUp(forceRestart):
-    global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN
     currVolume = VOLUME_MIN
     adjustVolume( currVolume )
     startSong(forceRestart)
@@ -95,7 +91,6 @@ def fadeVolumeUp(forceRestart):
     adjustVolume( VOLUME_MAX )
 
 def fadeVolumeDown():
-    global VOLUME_FADE_RATE, VOLUME_MAX, VOLUME_MIN
     currVolume = VOLUME_MAX
     adjustVolume( currVolume )
     logger.debug("VolumeDown from "+str(currVolume)+" to "+str(VOLUME_MIN))
@@ -113,7 +108,6 @@ def getProcessName(pid):
     return open(os.path.join('/proc',pid,'comm'),'rb').read()[:-1] # Remove last character (new line)
 
 def buttonWasPressed():
-    global PIN_BUTTON
     try:
         if not GPIO.input( PIN_BUTTON ):
             logger.info("Button was pressed ["+str(PIN_BUTTON)+"]")
