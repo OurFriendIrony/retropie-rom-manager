@@ -7,7 +7,7 @@ def getProcessIds():
 def getProcessName(pid):
     try:
         return open(os.path.join('/proc',pid,'comm'),'rb').read()[:-1] # Remove last character (new line)
-    except ValueError:
+    except IOError:
         return "null"
         
 def getCurrentSortedProcessNames():
