@@ -41,7 +41,7 @@ if not MUSIC_PLAY_ONLY == "":
 # PROCESS LISTS
 PROCESS_EMUSTAT = "emulationstatio"
 PROCESS_VIDEO = ["omxplayer","omxplayer.bin"]
-PROCESS_EMULATORS = ["retroarch","advmame","ags","alephone","atari800","basiliskll","cannonball","capricerpi","cgenesis","daphne","dgen","dosbox","eduke32","fbzx","frotz","fuse","gemrb","gngeo","gpsp","hatari","ioquake3","jzintv","kodi","linapple","lincity","love","mame","micropolis","mupen64plus","openbor","openmsx","openttd","opentyrian","osmose","pifba","pisnes","ppsspp","reicast","residualvm","scummvm","sdlpop","simcoupe","snes9x","solarus","stella","stratagus","tyrquake","uae4all2","uae4arm","uqm","vice","wolf4sdl","xrick","xroar","zdoom"]
+PROCESS_EMULATORS = ["retroarch","advmame","ags","alephone","atari800","basiliskll","bgdi-330","cannonball","capricerpi","cgenesis","daphne","dgen","dosbox","eduke32","fbzx","frotz","fuse","gemrb","gngeo","gpsp","hatari","ioquake3","ioquake3.arm","jzintv","kodi","linapple","lincity","love","mame","micropolis","mupen64plus","openbor","openmsx","openttd","opentyrian","osmose","pifba","pisnes","ppsspp","reicast","residualvm","scummvm","sdlpop","simcoupe","snes9x","solarus","stella","stratagus","tyrquake","uae4all2","uae4arm","uqm","vice","wolf4sdl","wolf4sdl-sw-v14","xrick","xroar","zdoom"]
 
 # GPIO
 GPIO.setmode( GPIO.BOARD )

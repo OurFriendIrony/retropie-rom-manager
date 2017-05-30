@@ -9,7 +9,7 @@ from subprocess import call
 GPIO.setmode( GPIO.BOARD )
 GPIO.setwarnings( False )
 
-PIN_OFF = 32
+PIN_OFF = 31
 GPIO.setup( PIN_OFF, GPIO.IN, pull_up_down=GPIO.PUD_UP )
 
 NAP_TIME = 0.2
