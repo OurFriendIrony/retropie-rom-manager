@@ -84,7 +84,7 @@ def ledGlowAndFade( colour ):
     ledGlow( colour )
     ledFade( colour )
 
-def getRandomLed(): 
+def getRandomLed():
 # Gets a random led colour - new same colour in sequence
     global lastIndex
     global currIndex
@@ -99,7 +99,7 @@ def ledGlowAndFadeSwitch( ledsOff, ledsOn ):
 # As one led starts to glow, another starts to fade
     for intensity in range( 0, 101, STEP ):
         for led1 in ledsOff:
-            led1.ChangeDutyCycle( 100 + (intensity*-1) )    
+            led1.ChangeDutyCycle( 100 + (intensity*-1) )
         for led2 in ledsOn:
             led2.ChangeDutyCycle( intensity )
         nap()
@@ -121,7 +121,7 @@ try:
         ledGlowAndFadeSwitch( lastLed, currentLed )
         lastLed = currentLed
 except KeyboardInterrupt:
-	pass
+    pass
 
 rgbPwmStop()
 

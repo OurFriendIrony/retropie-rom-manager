@@ -83,7 +83,7 @@ def ledGlowAndFade( colour ):
     ledGlow( colour )
     ledFade( colour )
 
-def getRandomLed(): 
+def getRandomLed():
 # Gets a random led colour - new same colour in sequence
     global lastIndex
     global currIndex
@@ -108,7 +108,7 @@ try:
     while 1:
         ledGlowAndFade( getRandomLed() )
 except KeyboardInterrupt:
-	pass
+    pass
 
 rgbPwmStop()
 

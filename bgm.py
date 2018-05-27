@@ -17,7 +17,7 @@ if not os.path.exists(os.path.dirname(LOG_DIR)):
     os.makedirs(os.path.dirname(LOG_DIR))
 if os.path.isfile(LOG_FILE):
     move(LOG_FILE, LOG_FILE+".bak")
-    
+
 logging.basicConfig( filename=LOG_FILE, format=LOG_FORMAT, level=logging.INFO )
 logger = logging.getLogger("bgm")
 
@@ -61,7 +61,7 @@ random.seed()
 
 def adjustVolume( newVolume ):
     mixer.music.set_volume( newVolume )
-    
+
 def startSong(forceRestart):
     if MUSIC_RESTART or forceRestart:
         mixer.music.rewind()
@@ -70,13 +70,13 @@ def startSong(forceRestart):
     else:
         mixer.music.unpause()
         logger.info("Audio resumed")
-        
+
 def stopSong():
     if MUSIC_RESTART:
-        mixer.music.stop() 
+        mixer.music.stop()
         logger.info("Audio stopped")
     else:
-        mixer.music.pause() 
+        mixer.music.pause()
         logger.info("Audio paused")
 
 def fadeVolumeUp(forceRestart):
@@ -128,8 +128,8 @@ def trackPlayedSongs(index):
 #####################################################
 
 logger.info("Log : "+LOG_FILE)
-    
-# Ensure we have music to play 
+
+# Ensure we have music to play
 if len( MUSIC_LIST ) == 0:
     logger.warning("No music to play...")
     sys.exit()
@@ -145,10 +145,10 @@ while not esIsRunning:
             procname = getProcessName(pid)
             if procname == PROCESS_EMUSTAT:
                 esIsRunning = True
-        except IOError: 
+        except IOError:
             logger.error("Failed to read process record")
             continue
-    
+
 # Wait for OMXPlayer to finish (video splashscreen player)
 logger.info("Checking for splashscreen video [OMXplayer]")
 pids = getProcessIds()
@@ -159,7 +159,7 @@ for pid in pids:
             logger.info("Waiting for splashscreen video to end... ["+procname+"]")
             while os.path.exists('/proc/'+pid):
                 time.sleep(1)
-    except IOError: 
+    except IOError:
         continue
 
 #####################################################
@@ -178,7 +178,7 @@ while True:
             if mixer.music.get_volume() > 0:
                 fadeVolumeDown()
             time.sleep(1)
-            
+
             pids = getProcessIds()
             for pid in pids:
                 try:
@@ -204,7 +204,7 @@ while True:
             currentSongIndex = random.randint( 0, len( MUSIC_LIST ) - 1 )
         trackPlayedSongs(currentSongIndex)
         song = os.path.join(MUSIC_DIR, MUSIC_LIST[currentSongIndex])
-        mixer.music.load(song) 
+        mixer.music.load(song)
         logger.info("Loaded music [" + song+"]")
         fadeVolumeUp(forceRestart=True)
     logger.debug("Music playing...")
@@ -234,7 +234,7 @@ while True:
         except IOError:
             continue
     logger.debug("No emulator running...")
-    
+
 #####################################################
 
 logger.error("An error has occurred that has stopped "+SCRIPT_NAME+" from executing.")
