@@ -1,5 +1,6 @@
-# Ignore everything except python code
-*
-!.gitignore
-!*.py
+# Python
+*.pyc
+
+# Logs
+logs/*
 
