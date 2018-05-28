@@ -1,4 +1,4 @@
-import os, logging, random, time
+import os, sys, logging, random, time
 import RPi.GPIO as GPIO
 from shutil import move
 from pygame import mixer                # "sudo apt-get install python-pygame"
@@ -27,9 +27,12 @@ VOLUME_MAX = 0.4
 VOLUME_FADE_RATE = 0.05
 VOLUME_FADE_DELAY = 0.3
 
-MUSIC_DIR = "/home/pi/RetroPie/roms/bgm"
+MUSIC_DIR = "/home/pi/bgm"
 MUSIC_PLAY_ONLY = ""                   # Force only this song to play
-MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3"]
+try:
+    MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3"]
+except:
+    MUSIC_LIST = ""
 MUSIC_RESTART = False                  # False = Music resumes | True = Music restarts
 
 # If only one song exists, force it
