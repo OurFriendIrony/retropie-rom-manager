@@ -2,8 +2,6 @@ import RPi.GPIO as GPIO
 import time
 
 #####################################################
-### INITIALISATION ##################################
-#####################################################
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
@@ -21,50 +19,51 @@ GPIO.setup(PIN_RED, GPIO.OUT)
 GPIO.setup(PIN_GREEN, GPIO.OUT)
 GPIO.setup(PIN_BLUE, GPIO.OUT)
 
-#####################################################
-### FUNCTIONS #######################################
+
 #####################################################
 
-def pinChange(pin, status):
+def pin_change(pin, status):
     if status:
         GPIO.output(pin, GPIO.HIGH)
     else:
         GPIO.output(pin, GPIO.LOW)
 
-def rgb(redStatus, greenStatus, blueStatus):
-    pinChange(PIN_RED, redStatus)
-    pinChange(PIN_GREEN, greenStatus)
-    pinChange(PIN_BLUE, blueStatus)
+
+def rgb(status_red, status_green, status_blue):
+    pin_change(PIN_RED, status_red)
+    pin_change(PIN_GREEN, status_green)
+    pin_change(PIN_BLUE, status_blue)
+
 
 def nap():
     time.sleep(NAP_TIME)
 
-def rgbPlusNap(redStatus, greenStatus, blueStatus):
+
+def rgb_plus_nap(status_red, status_green, status_blue):
     nap()
-    rgb(redStatus, greenStatus, blueStatus)
+    rgb(status_red, status_green, status_blue)
+
 
 #####################################################
-### MAIN ############################################
-#####################################################
 
-print( "SOLID LED DEMO" )
-print( "--------------" )
-print( "Start" )
+print("SOLID LED DEMO")
+print("--------------")
+print("Start")
 
 try:
-    while 1:
-        rgbPlusNap(ON, OFF, OFF)
-        rgbPlusNap(OFF, ON, OFF)
-        rgbPlusNap(OFF, OFF, ON)
-        rgbPlusNap(ON, ON, OFF)
-        rgbPlusNap(OFF, ON, ON)
-        rgbPlusNap(ON, OFF, ON)
-        rgbPlusNap(ON, ON, ON)
+    while True:
+        rgb_plus_nap(ON, OFF, OFF)
+        rgb_plus_nap(OFF, ON, OFF)
+        rgb_plus_nap(OFF, OFF, ON)
+        rgb_plus_nap(ON, ON, OFF)
+        rgb_plus_nap(OFF, ON, ON)
+        rgb_plus_nap(ON, OFF, ON)
+        rgb_plus_nap(ON, ON, ON)
 except KeyboardInterrupt:
     pass
 
 rgb(OFF, OFF, OFF)
 
-print( "Finish" )
+print("Finish")
 
 #####################################################

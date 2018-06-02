@@ -1,6 +1,11 @@
 # Python
 *.pyc
 
-# Logs
-logs/*
+# Vim
+*.swp
 
+# Intellij
+.idea
+
+# Project Output
+logs/
