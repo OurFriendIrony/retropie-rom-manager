@@ -16,6 +16,7 @@ Provides background music to emulationstation
 
 **monitor_processes**  
 Outputs entries when processes start and stop  
+Mainly used to debug bgm.py  
 
 **gpio_shutdown**  
 When gpio input received, perform system shutdown  
