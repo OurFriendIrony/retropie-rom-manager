@@ -30,7 +30,7 @@ VOLUME_MAX = 0.4
 VOLUME_FADE_RATE = 0.05
 VOLUME_FADE_DELAY = 0.3
 
-MUSIC_DIR = "/home/pi/bgm"
+MUSIC_DIR = "/home/pi/RetroPie/bgm"
 MUSIC_PLAY_ONLY = ""  # Force only this song to play
 try:
     MUSIC_LIST = [mp3 for mp3 in os.listdir(MUSIC_DIR) if mp3[-4:] == ".mp3"]
