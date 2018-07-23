@@ -50,7 +50,7 @@ if not MUSIC_PLAY_ONLY == "":
 PROCESS_EMUSTAT = "emulationstatio"
 PROCESS_VIDEO = ["omxplayer", "omxplayer.bin"]
 PROCESS_EMULATORS = ["retroarch", "advmame", "ags", "alephone", "atari800", "basiliskll", "bgdi-330", "cannonball",
-                     "capricerpi", "cgenesis", "daphne", "dgen", "dosbox", "eduke32", "fbzx", "frotz", "fuse", "gemrb",
+                     "capricerpi", "cgenesis", "daphne", "dgen", "drastic", "dosbox", "eduke32", "fbzx", "frotz", "fuse", "gemrb",
                      "gngeo", "gpsp", "hatari", "ioquake3", "ioquake3.arm", "jzintv", "kodi", "linapple", "lincity",
                      "love", "mame", "micropolis", "mupen64plus", "openbor", "openmsx", "openttd", "opentyrian",
                      "osmose", "pifba", "pisnes", "ppsspp", "reicast", "residualvm", "scummvm", "sdlpop", "simcoupe",
