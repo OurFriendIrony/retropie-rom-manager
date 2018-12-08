@@ -45,11 +45,15 @@ class SaveManager:
         zip.close()
 
     def backup_saves(self):
+        print("Backing up Saves to %s" % self.SAVES_ZIP_OUT)
         shutil.make_archive(self.SAVES_ZIP_OUT, 'zip', self.SAVES_LOCATION)
+        print("Backing up States to %s" % self.STATES_ZIP_OUT)
         shutil.make_archive(self.STATES_ZIP_OUT, 'zip', self.STATES_LOCATION)
 
     def restore_saves(self):
+        print("Restroing Saves to %s" % self.SAVES_LOCATION)
         self.unzip(self.SAVES_ZIP_OUT, self.SAVES_LOCATION)
+        print("Restroing States to %s" % self.STATES_LOCATION)
         self.unzip(self.STATES_ZIP_OUT, self.STATES_LOCATION)
 
 
