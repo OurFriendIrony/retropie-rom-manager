@@ -12,7 +12,7 @@ class SaveManager:
     SAVES_ZIP_OUT = "saves"
 
     STATES_LOCATION = "%s/states/" % RETROPIE_HOME
-    STATES_ZIP_OUT = "saves"
+    STATES_ZIP_OUT = "states"
 
     backup = False
     restore = False
