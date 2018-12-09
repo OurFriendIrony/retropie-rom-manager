@@ -10,10 +10,6 @@ from paramiko import AutoAddPolicy
 
 
 class LRFSClient(object):
-    bar_0 = "-"
-    bar_1 = ">"
-    bar_w = 20
-
     def __init__(self, host, port=22, user='pi', progress=None):
         self.ssh = SSHClient()
         self.ssh.load_system_host_keys()
@@ -40,25 +36,28 @@ class LRFSClient(object):
 
     def get_remote_filesize(self, path):
         _, raw_out, _ = self.ssh.exec_command("wc -c < \"{}\"".format(path))
-        return self.get_first_element(raw_out)
+        return self._get_first_element(raw_out)
 
-    def md5_no_diff(self, game_file, pc_states_emu_home, pi_states_emu_home):
-        md5_local = self.get_local_md5sum(pc_states_emu_home + game_file)
-        md5_remote = self.get_remote_md5sum(pi_states_emu_home + game_file)
+    def md5_is_equal(self, filename, home_local, home_remote):
+        md5_local = self._get_local_md5sum(home_local + filename)
+        md5_remote = self._get_remote_md5sum(home_remote + filename)
         return md5_local == md5_remote
 
-    def get_local_md5sum(self, path):
+    def _get_local_md5sum(self, path):
         hash_obj = hashlib.md5()
-        with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_obj.update(chunk)
-        return hash_obj.hexdigest()
+        try:
+            with open(path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_obj.update(chunk)
+            return hash_obj.hexdigest()
+        except IOError:
+            return 0
 
-    def get_remote_md5sum(self, path):
+    def _get_remote_md5sum(self, path):
         _, raw_out, _ = self.ssh.exec_command("md5sum \"{}\"".format(path))
-        return str(self.get_first_element(raw_out)).split(" ", 1)[0]
+        return str(self._get_first_element(raw_out)).split(" ", 1)[0]
 
-    def get_first_element(self, raw_out):
+    def _get_first_element(self, raw_out):
         try:
             return raw_out.read().splitlines()[0]
         except IndexError:
