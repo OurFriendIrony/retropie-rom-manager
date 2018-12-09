@@ -33,7 +33,7 @@ def progress(filename, size, sent):
 
 
 class RomManager:
-    ip = "192.168.1.177"
+    ip = "192.168.1.178"
     emus = [
         "atari2600", "atari7800", "nes", "snes",
         "megadrive", "gba", "n64", "dreamcast",
@@ -54,8 +54,13 @@ class RomManager:
         "psx": []
     }
 
-    pc_roms_home = "/media/videos/Games"
-    pi_roms_home = "/home/pi/RetroPie/roms"
+    pc_roms_home = "/media/videos/Games/{}/roms/"
+    # pc_saves_home = "/media/videos/Games/{}/saves/"
+    # pc_states_home = "/media/videos/Games/{}/states/"
+
+    pi_roms_home = "/home/pi/RetroPie/roms/{}/"
+    # pi_saves_home = "/home/pi/RetroPie/saves/{}/"
+    # pi_states_home = "/home/pi/RetroPie/states/{}/"
 
     ssh = SSHClient()
     ssh.load_system_host_keys()
@@ -67,12 +72,11 @@ class RomManager:
         for emu in self.emus:
             self.print_emu_header(emu)
 
-            games_dir = "{}/{}/games/".format(self.pc_roms_home, emu)
-            game_files = sorted(os.listdir(games_dir))
+            game_files = self.get_local_files(self.pc_roms_home, emu)
 
             for game_file in game_files:
-                rom_from = self.pc_roms_home + "/" + emu + "/games/" + game_file
-                rom_to = self.pi_roms_home + "/" + emu + "/" + game_file
+                rom_from = self.pc_roms_home.format(emu) + game_file
+                rom_to = self.pi_roms_home.format(emu) + game_file
 
                 rom_from_size = self.get_local_filesize(rom_from)
                 rom_to_size = self.get_remote_filesize(rom_to)
@@ -80,11 +84,16 @@ class RomManager:
                 if self.is_skipped_rom(emu, game_file):
                     print("\r | {:{b}>20} | {:^10} | {}".format(bar_0 * 20, state_copy_skipped, game_file, b=bar_0))
                 elif rom_from_size == rom_to_size:
-                    print("\r | {:{b}>20} | {:^10} | {}".format(bar_1 * 20, state_copy_not_required, game_file, b=bar_0))
+                    print(
+                        "\r | {:{b}>20} | {:^10} | {}".format(bar_1 * 20, state_copy_not_required, game_file, b=bar_0))
                 else:
                     self.copy_rom(rom_from, rom_to)
 
-            print("")
+
+    def get_local_files(self, path, emu):
+        games_dir = path.format(emu)
+        game_files = sorted(os.listdir(games_dir))
+        return game_files
 
     def copy_rom(self, rom_from, rom_to):
         # 'progress' function prints output from this operation
