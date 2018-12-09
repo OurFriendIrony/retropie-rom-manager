@@ -1,0 +1,65 @@
+#!/usr/bin/python
+
+import os
+import hashlib
+
+from scp import SCPClient
+from paramiko import SSHClient
+from paramiko import SFTPClient
+from paramiko import AutoAddPolicy
+
+
+class LRFSClient(object):
+    bar_0 = "-"
+    bar_1 = ">"
+    bar_w = 20
+
+    def __init__(self, host, port=22, user='pi', progress=None):
+        self.ssh = SSHClient()
+        self.ssh.load_system_host_keys()
+        self.ssh.set_missing_host_key_policy(AutoAddPolicy())
+        self.ssh.connect(host, port, user)
+        self.sftp = SFTPClient.from_transport(self.ssh.get_transport())
+        self.scp = SCPClient(self.ssh.get_transport(), progress=progress)
+
+    def get_local_files(self, games_dir):
+        return sorted(os.listdir(games_dir))
+
+    def get_remote_files(self, games_dir):
+        return sorted(self.sftp.listdir(games_dir))
+
+    def copy_from_remote_to_local(self, rom_from, rom_to):
+        self.scp.get(rom_from, rom_to)
+
+    def copy_from_local_to_remote(self, rom_from, rom_to):
+        self.ssh.exec_command("rm \"{}\"".format(rom_to))
+        self.scp.put(rom_from, rom_to)
+
+    def get_local_filesize(self, path):
+        return os.stat(path).st_size
+
+    def get_remote_filesize(self, path):
+        _, raw_out, _ = self.ssh.exec_command("wc -c < \"{}\"".format(path))
+        return self.get_first_element(raw_out)
+
+    def md5_no_diff(self, game_file, pc_states_emu_home, pi_states_emu_home):
+        md5_local = self.get_local_md5sum(pc_states_emu_home + game_file)
+        md5_remote = self.get_remote_md5sum(pi_states_emu_home + game_file)
+        return md5_local == md5_remote
+
+    def get_local_md5sum(self, path):
+        hash_obj = hashlib.md5()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_obj.update(chunk)
+        return hash_obj.hexdigest()
+
+    def get_remote_md5sum(self, path):
+        _, raw_out, _ = self.ssh.exec_command("md5sum \"{}\"".format(path))
+        return str(self.get_first_element(raw_out)).split(" ", 1)[0]
+
+    def get_first_element(self, raw_out):
+        try:
+            return raw_out.read().splitlines()[0]
+        except IndexError:
+            return 0

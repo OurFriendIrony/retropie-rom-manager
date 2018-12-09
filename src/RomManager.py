@@ -1,104 +1,67 @@
 #!/usr/bin/python
 
 import os
-from scp import SCPClient
-from paramiko import SSHClient
-from paramiko import AutoAddPolicy
 import sys
 
-
-def get_first_element(stdout):
-    try:
-        return stdout.read().splitlines()[0]
-    except IndexError:
-        return 0
-
-
-bar_0 = "-"
-bar_1 = ">"
-
-file_copy_complete = "-Copied-"
-file_copy_skipped = "-Ignored-"
-file_action_not_required = "-"
-
-
-def progress(filename, size, sent):
-    diff = (float(sent) / float(size) * 100)
-    bar = "{:{b}<20}".format(bar_1 * int(diff / 5), b=bar_0)
-
-    if int(diff) == 100:
-        print("\r | {:>20} | {:^10} | {}".format(bar, file_copy_complete, filename))
-    else:
-        sys.stdout.write("\r | {:>20} | {:^9.02f}% | {}".format(bar, diff, filename))
+from LRFSClient import LRFSClient
 
 
 class RomManager:
-    ip = "192.168.1.178"
+    bar_0 = "-"
+    bar_1 = ">"
+    bar_w = 20
+
+    file_copy_complete = "-Copied-"
+    file_copy_skipped = "-Ignored-"
+    file_action_not_required = "-"
+
+    ip = "192.168.1.179"
+
     emus = [
-        "atari2600", "atari7800", "nes", "snes",
-        "megadrive", "gba", "n64", "dreamcast",
+        "atari2600", "atari7800", "nes",
+        "snes", "megadrive", "gba",
+        "n64", "dreamcast",
         "nds", "fba", "psx"
     ]
 
     skip_roms = {
-        "atari2600": [],
-        "atari7800": [],
-        "nes": [],
-        "snes": [],
-        "megadrive": [],
-        "gba": [],
-        "n64": [],
-        "dreamcast": [],
-        "nds": [],
-        "fba": [],
-        "psx": []
+        "atari2600": [], "atari7800": [], "nes": [],
+        "snes": [], "megadrive": [], "gba": [],
+        "n64": [], "dreamcast": [],
+        "nds": [], "fba": [], "psx": []
     }
 
     pc_roms_home = "/media/videos/Games/{}/roms/"
-    # pc_saves_home = "/media/videos/Games/{}/saves/"
-    # pc_states_home = "/media/videos/Games/{}/states/"
-
     pi_roms_home = "/home/pi/RetroPie/roms/{}/"
-    # pi_saves_home = "/home/pi/RetroPie/saves/{}/"
-    # pi_states_home = "/home/pi/RetroPie/states/{}/"
-
-    ssh = SSHClient()
-    ssh.load_system_host_keys()
-    ssh.set_missing_host_key_policy(AutoAddPolicy())
-    ssh.connect(ip, 22, 'pi')
-    scp = SCPClient(ssh.get_transport(), progress=progress)
+    ssh_client = None
 
     def __init__(self):
+        self.ssh_client = LRFSClient(self.ip, progress=self.progress)
+
         for emu in self.emus:
+            pi_roms_emu_home = self.pi_roms_home.format(emu)
+            pc_roms_emu_home = self.pc_roms_home.format(emu)
+
             self.print_emu_header(emu)
-
-            game_files = self.get_local_files(self.pc_roms_home, emu)
-
+            game_files = self.ssh_client.get_local_files(pc_roms_emu_home)
             for game_file in game_files:
-                rom_from = self.pc_roms_home.format(emu) + game_file
-                rom_to = self.pi_roms_home.format(emu) + game_file
-
-                rom_from_size = self.get_local_filesize(rom_from)
-                rom_to_size = self.get_remote_filesize(rom_to)
+                rom_from = pc_roms_emu_home + game_file
+                rom_to = pi_roms_emu_home + game_file
 
                 if self.is_skipped_rom(emu, game_file):
-                    print("\r | {:{b}>20} | {:^10} | {}".format(bar_0 * 20, file_copy_skipped, game_file, b=bar_0))
-                elif rom_from_size == rom_to_size:
-                    print(
-                        "\r | {:{b}>20} | {:^10} | {}".format(bar_1 * 20, file_action_not_required, game_file, b=bar_0))
+                    print("\r | {:{b}>20} | {:^10} | {}".format(
+                        self.bar_0 * 20, self.file_copy_skipped,
+                        game_file, b=self.bar_0
+                    ))
+                elif self.no_change_required(rom_from, rom_to):
+                    self.print_action_not_required(game_file)
                 else:
-                    self.copy_rom(rom_from, rom_to)
+                    self.ssh_client.copy_from_local_to_remote(rom_from, rom_to)
 
-
-    def get_local_files(self, path, emu):
-        games_dir = path.format(emu)
-        game_files = sorted(os.listdir(games_dir))
-        return game_files
-
-    def copy_rom(self, rom_from, rom_to):
-        # 'progress' function prints output from this operation
-        self.ssh.exec_command("rm \"{}\"".format(rom_to))
-        self.scp.put(rom_from, rom_to)
+    def no_change_required(self, rom_from, rom_to):
+        rom_from_size = self.ssh_client.get_local_filesize(rom_from)
+        rom_to_size = self.ssh_client.get_remote_filesize(rom_to)
+        return str(rom_from_size) == str(rom_to_size)
 
     def is_skipped_rom(self, emu, rom):
         rom_raw = os.path.splitext(rom)[0]
@@ -110,14 +73,28 @@ class RomManager:
 
     def print_emu_header(self, emu):
         ll = 100
-        print("__{:^{ll}}__\n| {:^{ll}} |\n'.{:^{ll}}.'".format("_" * ll, emu.upper(), "_" * ll, ll=ll))
+        print("__{:^{ll}}__\n| {:^{ll}} |\n'.{:^{ll}}.'".format(
+            "_" * ll,
+            emu.upper(),
+            "_" * ll,
+            ll=ll
+        ))
 
-    def get_remote_filesize(self, rom_to):
-        stdin, stdout, stderr = self.ssh.exec_command("wc -c < \"{}\"".format(rom_to))
-        return str(get_first_element(stdout))
+    def print_action_not_required(self, game_file):
+        print("\r | {:{b}>20} | {:^10} | {}".format(
+            self.bar_1 * self.bar_w,
+            self.file_action_not_required,
+            game_file, b=self.bar_0
+        ))
 
-    def get_local_filesize(self, rom_from):
-        return str(os.stat(rom_from).st_size)
+    def progress(self, filename, size, sent):
+        diff = (float(sent) / float(size) * 100)
+        bar = "{:{b}<20}".format(self.bar_1 * int(diff / 5), b=self.bar_0)
+
+        if int(diff) == 100:
+            print("\r | {:>20} | {:^10} | {}".format(bar, self.file_copy_complete, filename))
+        else:
+            sys.stdout.write("\r | {:>20} | {:^9.02f}% | {}".format(bar, diff, filename))
 
 
 if __name__ == '__main__':
