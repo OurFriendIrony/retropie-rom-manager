@@ -25,7 +25,7 @@ class RomManager:
     ]
 
     skip_roms = {
-        "atari2600": ["*"], "atari7800": [], "nes": [],
+        "atari2600": [], "atari7800": [], "nes": [],
         "snes": [], "megadrive": [], "gba": [],
         "n64": [], "dreamcast": [],
         "nds": [], "fba": [], "psx": []

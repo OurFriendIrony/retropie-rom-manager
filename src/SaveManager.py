@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os
 import sys
 import argparse
 
@@ -75,7 +76,9 @@ class SaveManager:
         self.print_emu_header(emu)
         game_files = self.ssh_client.get_remote_files(pi_states_emu_home)
         for game_file in game_files:
-            if self.ssh_client.md5_is_equal(game_file, pc_states_emu_home, pi_states_emu_home):
+            if self.is_skipped_rom(emu, game_file):
+                self.print_action_skipped(game_file)
+            elif self.ssh_client.md5_is_equal(game_file, pc_states_emu_home, pi_states_emu_home):
                 self.print_action_not_required(game_file)
             else:
                 self.ssh_client.copy_from_remote_to_local(
@@ -85,7 +88,9 @@ class SaveManager:
 
         game_files = self.ssh_client.get_remote_files(pi_saves_emu_home)
         for game_file in game_files:
-            if self.ssh_client.md5_is_equal(game_file, pc_saves_emu_home, pi_saves_emu_home):
+            if self.is_skipped_rom(emu, game_file):
+                self.print_action_skipped(game_file)
+            elif self.ssh_client.md5_is_equal(game_file, pc_saves_emu_home, pi_saves_emu_home):
                 self.print_action_not_required(game_file)
             else:
                 self.ssh_client.copy_from_remote_to_local(
@@ -102,7 +107,9 @@ class SaveManager:
         self.print_emu_header(emu)
         game_files = self.ssh_client.get_local_files(pc_states_emu_home)
         for game_file in game_files:
-            if self.ssh_client.md5_is_equal(game_file, pc_states_emu_home, pi_states_emu_home):
+            if self.is_skipped_rom(emu, game_file):
+                self.print_action_skipped(game_file)
+            elif self.ssh_client.md5_is_equal(game_file, pc_states_emu_home, pi_states_emu_home):
                 self.print_action_not_required(game_file)
             else:
                 self.ssh_client.copy_from_local_to_remote(
@@ -112,7 +119,9 @@ class SaveManager:
 
         game_files = self.ssh_client.get_local_files(pc_saves_emu_home)
         for game_file in game_files:
-            if self.ssh_client.md5_is_equal(game_file, pc_saves_emu_home, pi_saves_emu_home):
+            if self.is_skipped_rom(emu, game_file):
+                self.print_action_skipped(game_file)
+            elif self.ssh_client.md5_is_equal(game_file, pc_saves_emu_home, pi_saves_emu_home):
                 self.print_action_not_required(game_file)
             else:
                 self.ssh_client.copy_from_local_to_remote(
@@ -120,12 +129,27 @@ class SaveManager:
                     pi_saves_emu_home + game_file
                 )
 
+    def is_skipped_rom(self, emu, rom):
+        rom_raw = os.path.splitext(rom)[0]
+        skip_roms_emu = self.skip_roms.get(emu, [])
+        if "*" in skip_roms_emu:
+            return True
+        else:
+            return rom_raw in skip_roms_emu
+
     def print_emu_header(self, emu):
         print("__{:^{ll}}__\n| {:^{ll}} |\n'.{:^{ll}}.'".format(
             self.bar_h * self.bar_wh,
             emu.upper(),
             self.bar_h * self.bar_wh,
             ll=self.bar_wh
+        ))
+
+    def print_action_skipped(self, filename):
+        print("\r |{:^20}| {:^10} | {}".format(
+            "n/a",
+            self.file_action_skipped,
+            filename
         ))
 
     def print_action_not_required(self, filename):
