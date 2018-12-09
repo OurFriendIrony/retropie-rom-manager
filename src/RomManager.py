@@ -17,9 +17,9 @@ def get_first_element(stdout):
 bar_0 = "-"
 bar_1 = ">"
 
-state_copy_complete = "COPIED"
-state_copy_skipped = "SKIPPED"
-state_copy_not_required = "EXISTS"
+file_copy_complete = "-Copied-"
+file_copy_skipped = "-Ignored-"
+file_action_not_required = "-"
 
 
 def progress(filename, size, sent):
@@ -27,7 +27,7 @@ def progress(filename, size, sent):
     bar = "{:{b}<20}".format(bar_1 * int(diff / 5), b=bar_0)
 
     if int(diff) == 100:
-        print("\r | {:>20} | {:^10} | {}".format(bar, state_copy_complete, filename))
+        print("\r | {:>20} | {:^10} | {}".format(bar, file_copy_complete, filename))
     else:
         sys.stdout.write("\r | {:>20} | {:^9.02f}% | {}".format(bar, diff, filename))
 
@@ -82,10 +82,10 @@ class RomManager:
                 rom_to_size = self.get_remote_filesize(rom_to)
 
                 if self.is_skipped_rom(emu, game_file):
-                    print("\r | {:{b}>20} | {:^10} | {}".format(bar_0 * 20, state_copy_skipped, game_file, b=bar_0))
+                    print("\r | {:{b}>20} | {:^10} | {}".format(bar_0 * 20, file_copy_skipped, game_file, b=bar_0))
                 elif rom_from_size == rom_to_size:
                     print(
-                        "\r | {:{b}>20} | {:^10} | {}".format(bar_1 * 20, state_copy_not_required, game_file, b=bar_0))
+                        "\r | {:{b}>20} | {:^10} | {}".format(bar_1 * 20, file_action_not_required, game_file, b=bar_0))
                 else:
                     self.copy_rom(rom_from, rom_to)
 
