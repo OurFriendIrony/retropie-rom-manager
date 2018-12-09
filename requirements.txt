@@ -1,7 +1,6 @@
 pytest
 coverage
-RPi.GPIO
-pygame
 scp
 ssh
 paramiko
+
