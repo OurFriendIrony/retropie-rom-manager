@@ -2,7 +2,7 @@
   
 | **Build** | **Coverage** |
 |---|---|
-| [![Build Status](https://travis-ci.org/OurFriendIrony/python-retropie.png)](https://travis-ci.org/OurFriendIrony/python-retropie) | [![codecov](https://codecov.io/gh/OurFriendIrony/python-retropie/branch/master/graph/badge.svg)](https://codecov.io/gh/OurFriendIrony/python-retropie) |
+| [![Build Status](https://travis-ci.org/OurFriendIrony/retropie-rom-manager.png)](https://travis-ci.org/OurFriendIrony/retropie-rom-manager) | [![codecov](https://codecov.io/gh/OurFriendIrony/retropie-rom-manager/branch/master/graph/badge.svg)](https://codecov.io/gh/OurFriendIrony/retropie-rom-manager) |
   
 ## Prereqs  
 `pip install -r requirements.txt`  
@@ -11,21 +11,16 @@
 `coverage run -m pytest -v`  
   
 ## Scripts  
-**bgm**  
-Provides background music to emulationstation  
+**SaveManager**  
+Used to backup or restore 'save' and 'state' game files between a pi and a local disk
+```
+python ./src/SaveManager --backup
+python ./src/SaveManager --restore
+```
+  
+**RomManager**  
+Used to copy all emulator roms from local disk to a pi
+```
+python ./src/RomManager
+```
 
-**monitor_processes**  
-Outputs entries when processes start and stop  
-Mainly used to debug bgm.py  
-
-**gpio_shutdown**  
-When gpio input received, perform system shutdown  
-
-**gpio_led_continuous**  
-GPIO output to cycle led colours, continuously  
-
-**gpio_led_pwm**  
-GPIO output to cycle led colours, pwm  
-
-**gpio_led_solid**  
-GPIO output to cycle led colours, solid  
