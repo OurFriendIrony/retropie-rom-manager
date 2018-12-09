@@ -51,9 +51,9 @@ class SaveManager:
         shutil.make_archive(self.STATES_ZIP_OUT, 'zip', self.STATES_LOCATION)
 
     def restore_saves(self):
-        print("Restroing Saves to %s" % self.SAVES_LOCATION)
+        print("Restoring Saves to %s" % self.SAVES_LOCATION)
         self.unzip(self.SAVES_ZIP_OUT, self.SAVES_LOCATION)
-        print("Restroing States to %s" % self.STATES_LOCATION)
+        print("Restoring States to %s" % self.STATES_LOCATION)
         self.unzip(self.STATES_ZIP_OUT, self.STATES_LOCATION)
 
 
