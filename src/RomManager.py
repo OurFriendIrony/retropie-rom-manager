@@ -15,19 +15,19 @@ class RomManager:
     file_action_skipped = "-Ignored-"
     file_action_not_required = "-"
 
-    ip = "192.168.1.179"
+    ip = "127.0.0.1"
 
     emus = [
         "atari2600", "atari7800", "nes",
         "snes", "megadrive", "gba",
-        "n64", "dreamcast",
+        "n64", "dreamcast", "gc",
         "nds", "fba", "psx"
     ]
 
     skip_roms = {
         "atari2600": [], "atari7800": [], "nes": [],
         "snes": [], "megadrive": [], "gba": [],
-        "n64": [], "dreamcast": [],
+        "n64": [], "dreamcast": [], "gc": [],
         "nds": [], "fba": [], "psx": []
     }
 
@@ -122,3 +122,4 @@ class RomManager:
 
 if __name__ == '__main__':
     RomManager()
+
