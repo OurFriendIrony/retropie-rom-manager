@@ -59,6 +59,6 @@ class LRFSClient(object):
 
     def _get_first_element(self, raw_out):
         try:
-            return raw_out.read().splitlines()[0]
+            return raw_out.read().splitlines()[0].decode()
         except IndexError:
             return 0
