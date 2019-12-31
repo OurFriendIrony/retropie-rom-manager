@@ -1,0 +1,55 @@
+---
+
+source:
+  addr  : "localhost"
+  dirs:
+    roms    : "/mnt/z/Games/{}/roms/"
+    saves   : "/mnt/z/Games/{}/saves/"
+    states  : "/mnt/z/Games/{}/states/"
+
+dest:
+  addr  : "192.168.1.195"
+  dirs:
+    roms    : "/home/pi/RetroPie/roms/{}/"
+    saves   : "/home/pi/RetroPie/saves/{}/"
+    states  : "/home/pi/RetroPie/states/{}/"
+
+#################################################
+
+systems:
+  - emu: "atari2600"
+    skip_roms: []
+
+  - emu: "atari7800"
+    skip_roms: []
+
+  - emu: "nes"
+    skip_roms: []
+
+  - emu: "snes"
+    skip_roms: []
+
+  - emu: "megadrive"
+    skip_roms: []
+
+  - emu: "gba"
+    skip_roms: []
+
+  - emu: "n64"
+    skip_roms: []
+
+  - emu: "dreamcast"
+    skip_roms: ["*"]
+
+  - emu: "gc"
+    skip_roms: ["*"]
+
+  - emu: "nds"
+    skip_roms: []
+
+  - emu: "fba"
+    skip_roms: []
+
+  - emu: "psx"
+    skip_roms: []
+

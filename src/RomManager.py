@@ -2,8 +2,15 @@
 
 import os
 import sys
+import yaml
 
 from LRFSClient import LRFSClient
+
+def _str(data):
+    try:
+        return str(data.decode('utf-8'))
+    except:
+        return str(data)
 
 
 class RomManager:
@@ -15,35 +22,23 @@ class RomManager:
     file_action_skipped = "-Ignored-"
     file_action_not_required = "-"
 
-    ip = "127.0.0.1"
-
-    emus = [
-        "atari2600", "atari7800", "nes",
-        "snes", "megadrive", "gba",
-        "n64", "dreamcast", "gc",
-        "nds", "fba", "psx"
-    ]
-
-    skip_roms = {
-        "atari2600": [], "atari7800": [], "nes": [],
-        "snes": [], "megadrive": [], "gba": [],
-        "n64": [], "dreamcast": [], "gc": [],
-        "nds": [], "fba": [], "psx": []
-    }
-
-    pc_roms_home = "/media/videos/Games/{}/roms/"
-    pi_roms_home = "/home/pi/RetroPie/roms/{}/"
+    cfg_path = os.getcwd() + "/cfg/cfg.yml"
+    cfg = None
 
     ssh_client = None
 
     def __init__(self):
-        self.ssh_client = LRFSClient(self.ip, progress=self.progress)
-        for emu in self.emus:
-            self.restore_roms(emu)
+        with open(self.cfg_path, 'r') as stream:
+            self.cfg = yaml.safe_load(stream)
+        self.ssh_client = LRFSClient(self.cfg['dest']['addr'], progress=self.progress)
+        for system in self.cfg['systems']:
+            emu = system['emu']
+            skips = system['skip_roms']
+            self.restore_roms(emu, skips)
 
-    def restore_roms(self, emu):
-        pi_roms_emu_home = self.pi_roms_home.format(emu)
-        pc_roms_emu_home = self.pc_roms_home.format(emu)
+    def restore_roms(self, emu, skips=[]):
+        pi_roms_emu_home = self.cfg['dest']['dirs']['roms'].format(emu)
+        pc_roms_emu_home = self.cfg['source']['dirs']['roms'].format(emu)
 
         self.print_emu_header(emu)
         game_files = self.ssh_client.get_local_files(pc_roms_emu_home)
@@ -51,7 +46,7 @@ class RomManager:
             rom_from = pc_roms_emu_home + game_file
             rom_to = pi_roms_emu_home + game_file
 
-            if self.is_skipped_rom(emu, game_file):
+            if self.is_skipped_rom(game_file, skips):
                 self.print_action_skipped(game_file)
             elif self.no_change_required(rom_from, rom_to):
                 self.print_action_not_required(game_file)
@@ -61,15 +56,14 @@ class RomManager:
     def no_change_required(self, rom_from, rom_to):
         rom_from_size = self.ssh_client.get_local_filesize(rom_from)
         rom_to_size = self.ssh_client.get_remote_filesize(rom_to)
-        return str(rom_from_size) == str(rom_to_size)
+        return _str(rom_from_size) == _str(rom_to_size)
 
-    def is_skipped_rom(self, emu, rom):
+    def is_skipped_rom(self, rom, skip_roms):
         rom_raw = os.path.splitext(rom)[0]
-        skip_roms_emu = self.skip_roms.get(emu, [])
-        if "*" in skip_roms_emu:
+        if "*" in skip_roms:
             return True
         else:
-            return rom_raw in skip_roms_emu
+            return rom_raw in skip_roms
 
     def print_emu_header(self, emu):
         print("__{:^{ll}}__\n| {:^{ll}} |\n'.{:^{ll}}.'".format(
@@ -110,9 +104,9 @@ class RomManager:
     def progress(self, filename, size, sent):
         diff = (float(sent) / float(size) * 100)
         if int(diff) == 100:
-            self.print_action_complete(filename)
+            self.print_action_complete(_str(filename))
         else:
-            self.print_action_progress(diff, filename)
+            self.print_action_progress(diff, _str(filename))
 
     def get_bar(self, diff):
         len_1 = int(diff / 5)
