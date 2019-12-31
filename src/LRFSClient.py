@@ -8,6 +8,12 @@ from paramiko import SSHClient
 from paramiko import SFTPClient
 from paramiko import AutoAddPolicy
 
+def _str(data):
+    try:
+        return str(data.decode('utf-8'))
+    except:
+        return str(data)
+
 
 class LRFSClient(object):
     def __init__(self, host, port=22, user='pi', progress=None):
@@ -38,10 +44,10 @@ class LRFSClient(object):
         _, raw_out, _ = self.ssh.exec_command("wc -c < \"{}\"".format(path))
         return self._get_first_element(raw_out)
 
-    def md5_is_equal(self, filename, home_local, home_remote):
-        md5_local = self._get_local_md5sum(home_local + filename)
-        md5_remote = self._get_remote_md5sum(home_remote + filename)
-        return md5_local == md5_remote
+    def md5_is_equal(self, home_local, home_remote):
+        md5_local = self._get_local_md5sum(home_local)
+        md5_remote = self._get_remote_md5sum(home_remote)
+        return _str(md5_local) == _str(md5_remote)
 
     def _get_local_md5sum(self, path):
         hash_obj = hashlib.md5()
@@ -59,6 +65,8 @@ class LRFSClient(object):
 
     def _get_first_element(self, raw_out):
         try:
-            return raw_out.read().splitlines()[0]
+            return _str(raw_out.read()).splitlines()[0]
         except IndexError:
             return 0
+
+
