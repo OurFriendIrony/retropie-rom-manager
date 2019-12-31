@@ -22,7 +22,6 @@ class RomManager:
     file_action_skipped = "-Ignored-"
     file_action_not_required = "-"
 
-
     cfg_path = os.getcwd() + "/cfg/cfg.yml"
     cfg = None
 

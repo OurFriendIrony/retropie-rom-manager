@@ -14,13 +14,13 @@
 **SaveManager**  
 Used to backup or restore 'save' and 'state' game files between a pi and a local disk
 ```
-python ./src/SaveManager --backup
-python ./src/SaveManager --restore
+python ./src/SaveManager.py --backup
+python ./src/SaveManager.py --restore
 ```
   
 **RomManager**  
 Used to copy all emulator roms from local disk to a pi
 ```
-python ./src/RomManager
+python ./src/RomManager.py
 ```
 
