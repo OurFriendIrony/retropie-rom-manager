@@ -22,22 +22,24 @@ class RomManager:
     file_action_skipped = "-Ignored-"
     file_action_not_required = "-"
 
-    cfg_file = "cfg/cfg.yml"
 
-    ssh_client = None
+    cfg_path = os.getcwd() + "/cfg/cfg.yml"
     cfg = None
 
+    ssh_client = None
+
     def __init__(self):
-        cfg_path = os.getcwd() + "/" + self.cfg_file
-        with open(cfg_path, 'r') as stream:
+        with open(self.cfg_path, 'r') as stream:
             self.cfg = yaml.safe_load(stream)
         self.ssh_client = LRFSClient(self.cfg['dest']['addr'], progress=self.progress)
         for system in self.cfg['systems']:
-            self.restore_roms(system['emu'], system['skip_roms'])
+            emu = system['emu']
+            skips = system['skip_roms']
+            self.restore_roms(emu, skips)
 
     def restore_roms(self, emu, skips=[]):
-        pi_roms_emu_home = self.cfg['dest']['dir'].format(emu)
-        pc_roms_emu_home = self.cfg['source']['dir'].format(emu)
+        pi_roms_emu_home = self.cfg['dest']['dirs']['roms'].format(emu)
+        pc_roms_emu_home = self.cfg['source']['dirs']['roms'].format(emu)
 
         self.print_emu_header(emu)
         game_files = self.ssh_client.get_local_files(pc_roms_emu_home)

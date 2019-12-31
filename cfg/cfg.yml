@@ -2,11 +2,17 @@
 
 source:
   addr  : "localhost"
-  dir   : "/mnt/z/Games/{}/roms/"
+  dirs:
+    roms    : "/mnt/z/Games/{}/roms/"
+    saves   : "/mnt/z/Games/{}/saves/"
+    states  : "/mnt/z/Games/{}/states/"
 
 dest:
   addr  : "192.168.1.195"
-  dir   : "/home/pi/RetroPie/roms/{}/"
+  dirs:
+    roms    : "/home/pi/RetroPie/roms/{}/"
+    saves   : "/home/pi/RetroPie/saves/{}/"
+    states  : "/home/pi/RetroPie/states/{}/"
 
 #################################################
 
