@@ -77,28 +77,28 @@ class RomManager:
         print("\r |{:^20}| {:^10} | {}".format(
             "n/a",
             self.file_action_skipped,
-            filename
+            self.bts(filename)
         ))
 
     def print_action_not_required(self, filename):
         print("\r |{:^20}| {:^10} | {}".format(
             self.get_bar(100.0),
             self.file_action_not_required,
-            filename
+            self.bts(filename)
         ))
 
     def print_action_complete(self, filename):
         print("\r |{:^20}| {:^10} | {}".format(
             self.get_bar(100.0),
             self.file_copy_complete,
-            filename
+            self.bts(filename)
         ))
 
     def print_action_progress(self, diff, filename):
         sys.stdout.write("\r |{:^20}| {:^9.02f}% | {}".format(
             self.get_bar(diff),
             diff,
-            filename
+            self.bts(filename)
         ))
 
     def progress(self, filename, size, sent):
@@ -113,6 +113,11 @@ class RomManager:
         len_2 = 1 - int(diff / self.bar_wh)
         return "{:20}".format(("=" * len_1) + (">" * len_2))
 
+    def bts(self, s):
+        #bytes to strings
+        if isinstance(s, bytes):
+            return s.decode()
+        return s
 
 if __name__ == '__main__':
     RomManager()
